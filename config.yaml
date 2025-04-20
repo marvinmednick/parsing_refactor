@@ -1,0 +1,90 @@
+# Main configuration for the PDF parser
+
+# List of handler type names to activate. Must match TYPE_NAME in handler classes
+# or the type_name provided when initializing PrefixedSectionHandler.
+section_handlers:
+  - Numeric
+  - AlphaNumeric
+  - Annex        # Assuming Annex uses AlphaNumeric base (e.g., Annex A, Annex A.1)
+  - Appendix     # Assuming Appendix uses AlphaNumeric base (e.g., Appendix A, Appendix B.1)
+
+# These rules are less critical in the predictive model but retained for potential use/reference.
+# The main logic is in SectionProcessor._calculate_predictions based on convention.
+valid_next_section_rules:
+  Numeric:
+    - operation: next_current_level
+    - operation: next_parent_level
+    - operation: new_subsection
+      params: { allowed_types: [Numeric], start_with: 1 }
+    - operation: new_section_type
+      target_type: Appendix
+      required_start_structure:
+        - "Appendix A"
+        - "Appendix 1" # Assumes Appendix handler can parse this (e.g., uses Numeric base for this case?)
+    - operation: new_section_type
+      target_type: Annex
+        # Explicitly allow Annex A OR Annex 1
+      required_start_structure:
+        - "Annex A"
+        - "Annex 1" # Assumes Annex handler can parse this (e.g., uses Numeric base for this case?)
+    - operation: new_section_type
+      target_type: AlphaNumeric
+      # Explicitly allow ONLY A.1 (overrides handler default)
+      required_start_structure: "A.1"
+  Annex:
+    - operation: next_current_level
+    - operation: next_parent_level
+    - operation: new_subsection
+      params: { allowed_types: [Numeric], start_with: 1 }
+    - operation: new_subsection_type # Allows Annex A -> A.1
+      target_type: AlphaNumeric
+      params: { allowed_types: [Numeric], start_with: 1 }
+    - operation: new_section_type
+      target_type: Appendix
+      required_start_structure:
+        - "Appendix A"
+        - "Appendix 1" # Assumes Appendix handler can parse this (e.g., uses Numeric base for this case?)
+  Appendix:
+    - operation: next_current_level
+    - operation: next_parent_level
+    - operation: new_subsection
+      params: { allowed_types: [Numeric], start_with: 1 }
+    - operation: new_subsection_type # Allows Appendix A -> A.1
+      target_type: AlphaNumeric
+      params: { allowed_types: [Numeric], start_with: 1 }
+    - operation: new_section_type
+      target_type: Annex
+      required_start_structure:
+        - "Annex A"
+        - "Annex 1" # Assumes Annex handler can parse this (e.g., uses Numeric base for this case?)
+  AlphaNumeric:
+    - operation: next_current_level
+    - operation: next_parent_level
+    - operation: new_subsection
+      params: { allowed_types: [Numeric], start_with: 1 }
+    - operation: new_section_type
+      target_type: Appendix
+      required_start_structure:
+        - "Appendix A"
+        - "Appendix 1" # Assumes Appendix handler can parse this (e.g., uses Numeric base for this case?)
+    - operation: new_section_type
+      target_type: Annex
+      required_start_structure:
+        - "Annex A"
+        - "Annex 1" # Assumes Annex handler can parse this (e.g., uses Numeric base for this case?)
+
+# Policy for the very first section found in the document
+first_section_policy:
+  accept_any: false # If false, requires first section to match specific criteria
+  # Optionally specify allowed type(s) using YAML list syntax:
+  # must_start_with_type: [Numeric, Appendix]
+  # Optionally specify the exact required starting structure using YAML list-of-lists format:
+  must_start_with_structure:
+    - ['N', 1] # Represents [('N', 1)] - Must start with section "1"
+
+# Other parameters (can be nested)
+constants:
+  MAX_DOTS: 16
+  MIN_DOC_LENGTH: 32
+  MIN_KEEP_LENGTH: 512
+  # N_LANG_CHUNKS: 16 # If needed by language check logic
