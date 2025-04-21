@@ -1,0 +1,53 @@
+# debug_config.yaml
+# Initial config to diagnose why the first section isn't found.
+
+# Category for main function flow
+main:
+  initially_active: true
+
+# Category for state class initialization
+state_init:
+  initially_active: true
+
+# Category for line processing steps (shows lines being fed to state processor)
+line_proc:
+  initially_active: true
+
+# Category for prediction calculation logic
+prediction:
+  initially_active: true # See what it predicts initially
+
+# Category active when matching predictions against parsed lines
+match:
+  initially_active: true # See details of comparisons
+
+# Category active when state (stack) is updated
+state_update:
+  initially_active: true # See if stack gets updated at all
+
+# --- Categories starting inactive (can be enabled if needed) ---
+
+# Category for PDF extraction details (less likely needed now)
+extract:
+  initially_active: false
+
+# Category for image extraction details
+extract_img:
+  initially_active: false
+
+# Category for language checking (happens after section finalized)
+lang_check:
+  initially_active: false
+
+# Category for errors (always good to have)
+error:
+  initially_active: true
+
+# Category for ifinailing  
+finalize:
+  initially_active: true
+
+# Category for ifinailing  
+state_update:
+  initially_active: true
+

@@ -1,0 +1,23 @@
+[project]
+name = "pdf-parser"
+version = "0.1.0"
+description = "Parses PDF documents to extract sections based on headers."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "langdetect>=1.0.9",
+    "pdfplumber>=0.11.6",
+    "pyyaml>=6.0.2",
+]
+
+[dependencies]
+python = "^3.9" # Or your preferred Python version
+pdfplumber = "^0.10.0" # Or latest
+langdetect = "^1.0.9"
+pyyaml = "^6.0"
+
+
+[tool.uv] # Optional: If using uv
+dev-dependencies = [
+    "pytest",
+]
