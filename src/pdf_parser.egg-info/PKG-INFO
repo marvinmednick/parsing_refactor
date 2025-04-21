@@ -1,9 +1,0 @@
-Metadata-Version: 2.4
-Name: pdf-parser
-Version: 0.1.0
-Summary: Parses PDF documents to extract sections based on headers.
-Requires-Python: >=3.11
-Description-Content-Type: text/markdown
-Requires-Dist: langdetect>=1.0.9
-Requires-Dist: pdfplumber>=0.11.6
-Requires-Dist: pyyaml>=6.0.2

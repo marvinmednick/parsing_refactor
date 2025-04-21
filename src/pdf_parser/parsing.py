@@ -198,6 +198,29 @@ def perform_language_check(text: str, debug_manager: DebugManager) -> bool:
     return True
 
 
+def initialize_handlers(config, debug_manager):
+    from .handlers import NumericHandler, AlphaNumericHandler, SectionHandler
+    handlers_map = {}
+    available_handler_names = config.get("section_handlers", [])
+    if "Numeric" in available_handler_names:
+        handlers_map["Numeric"] = NumericHandler(type_name="Numeric")
+    if "AlphaNumeric" in available_handler_names:
+        handlers_map["AlphaNumeric"] = AlphaNumericHandler(type_name="AlphaNumeric")
+    if "Annex" in available_handler_names:
+        handlers_map["Annex"] = AlphaNumericHandler(type_name="Annex", prefix="Annex", allow_trailing_dot=True)
+    if "Appendix" in available_handler_names:
+        handlers_map["Appendix"] = AlphaNumericHandler(type_name="Appendix", prefix="Appendix", allow_trailing_dot=True)
+    # Filter to only those specified in config
+    active_handlers_map = {name: handler for name, handler in handlers_map.items() if name in available_handler_names}
+    if not active_handlers_map:
+        if available_handler_names:
+            raise ConfigError(f"Specified handlers in config ({available_handler_names}) did not match known implementation types.")
+        else:
+            raise ConfigError("No section handlers specified or enabled in configuration.")
+    debug_manager.debug("main", f"Initialized active handlers: {list(active_handlers_map.keys())}")
+    return active_handlers_map
+
+
 # --- Main Parsing Function ---
 
 
@@ -270,74 +293,7 @@ def to_sections(
                 "main", "Parsing by detected sections using predictive state machine..."
             )
 
-            # Initialize handlers (now done inside SectionProcessor)
-            # Need to import handlers here if SectionProcessor expects instances
-            from .handlers import (
-                NumericHandler,
-                AlphaNumericHandler,
-                SectionHandler,
-            )
-
-            handlers_map: Dict[str, SectionHandler] = {}
-            available_handler_names = config.get(
-                "section_handlers", []
-            )  # Names from YAML
-            debug_manager.debug(
-                "main", f"Configured handlers: {available_handler_names}"
-            )
-
-            if "Numeric" in available_handler_names:
-                handlers_map["Numeric"] = NumericHandler(type_name="Numeric")
-
-            if "AlphaNumeric" in available_handler_names:
-                handlers_map["AlphaNumeric"] = AlphaNumericHandler(
-                    type_name="AlphaNumeric"
-                )
-
-            if "Annex" in available_handler_names:
-                # Directly initialize AlphaNumericHandler with Annex details
-                handlers_map["Annex"] = AlphaNumericHandler(
-                    type_name="Annex",
-                    prefix="Annex",
-                    allow_trailing_dot=True,  # Allow "Annex A."
-                )
-
-            if "Appendix" in available_handler_names:
-                # Directly initialize AlphaNumericHandler (or NumericHandler) with Appendix details
-                # Example: Using AlphaNumeric base, allowing trailing dot
-                handlers_map["Appendix"] = AlphaNumericHandler(
-                    type_name="Appendix",
-                    prefix="Appendix",
-                    allow_trailing_dot=True,  # Allow "Appendix A."
-                )
-                # Example if Appendix used Numeric base:
-                # handlers_map["Appendix"] = NumericHandler(
-                #    type_name="Appendix",
-                #    prefix="Appendix",
-                #    allow_trailing_dot=True # Allow "Appendix 1."
-                # )
-
-            # Filter handlers_map to only include those specified in config
-            active_handlers_map = {
-                name: handler
-                for name, handler in handlers_map.items()
-                if name in available_handler_names
-            }
-
-            if not active_handlers_map:
-                if available_handler_names:
-                    raise ConfigError(
-                        f"Specified handlers in config ({available_handler_names}) did not match known implementation types."
-                    )
-                else:
-                    raise ConfigError(
-                        "No section handlers specified or enabled in configuration."
-                    )
-
-            debug_manager.debug(
-                "main",
-                f"Initialized active handlers: {list(active_handlers_map.keys())}",
-            )
+            handlers_map = initialize_handlers(config, debug_manager)
 
             lines = get_lines(extracted_data["pages_text_lines"], debug_manager)
             # if prog_cb: prog_cb("parsing_sections", 0.3)
